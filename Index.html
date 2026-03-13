@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Fiche de Leçon — Remplissage Dynamique</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #4a90e2;
+      --secondary-color: #f4f4f9;
+      --accent-color: #ff6f61;
+      --text-color: #333;
+      --border-radius: 8px;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Patrick Hand', cursive;
+      padding: 20px;
+      background-color: var(--secondary-color);
+      color: var(--text-color);
+      line-height: 1.6;
+    }
+
+    #lockScreen {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--secondary-color); z-index: 9999;
+      display: flex; justify-content: center; align-items: center; padding: 20px;
+    }
+    .lock-card {
+      background: white; padding: 30px; border-radius: var(--border-radius);
+      box-shadow: var(--shadow); max-width: 400px; width: 100%; text-align: center;
+    }
+    #mainContent { display: none; }
+
+    h2, h3 { color: var(--primary-color); margin-bottom: 20px; text-align: center; }
+
+    textarea {
+      width: 100%; height: 200px; margin-bottom: 15px; font-size: 16px;
+      font-family: 'Patrick Hand', cursive; padding: 15px;
+      border: 1px solid #ccc; border-radius: var(--border-radius);
+      box-shadow: var(--shadow); resize: vertical;
+    }
+
+    #tableContainer {
+      padding: 20px; background-color: #fff; border-radius: var(--border-radius);
+      box-shadow: var(--shadow); margin-top: 20px;
+    }
+
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; background-color: #fff; }
+    table, th, td { border: 1px solid #ddd; }
+    th, td { padding: 15px; text-align: left; vertical-align: top; }
+    th { background-color: var(--primary-color); color: #fff; font-weight: bold; }
+
+    td[contenteditable="true"] { background-color: #f9f9f9; }
+
+    #controls { margin: 15px 0; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; justify-content: center; }
+
+    button {
+      padding: 10px 20px; cursor: pointer; background-color: var(--primary-color);
+      color: #fff; border: none; border-radius: var(--border-radius);
+      box-shadow: var(--shadow); transition: background-color 0.3s;
+    }
+
+    button:hover { background-color: #357abd; }
+
+    .btn-wave {
+      background-color: #1dcaff;
+      margin: 15px 0;
+      display: inline-block;
+      text-decoration: none;
+      color: white;
+      padding: 15px 30px;
+      border-radius: var(--border-radius);
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      width: 100%;
+    }
+
+    .btn-wave:hover { background-color: #0db3e6; }
+
+    .btn-whatsapp {
+      background-color: #25d366;
+      margin-top: 10px;
+      display: inline-block;
+      text-decoration: none;
+      color: white;
+      padding: 10px 20px;
+      border-radius: var(--border-radius);
+      font-size: 14px;
+      width: 100%;
+      border: none;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .btn-whatsapp:hover { background-color: #1fa855; }
+
+    .btn-whatsapp-order {
+      background-color: #25d366;
+      color: white;
+      padding: 10px 20px;
+      border-radius: var(--border-radius);
+      font-size: 14px;
+      border: none;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-whatsapp-order:hover { background-color: #1fa855; }
+
+    #formContainer { margin-top: 40px; padding: 20px; background-color: #fff; border-radius: var(--border-radius); box-shadow: var(--shadow); }
+
+    #robotPopup {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.6); z-index: 10000;
+      justify-content: center; align-items: center;
+    }
+
+    #robotPopupContent {
+      background-color: #fff; padding: 30px; border-radius: var(--border-radius);
+      max-width: 500px; width: 90%; text-align: center;
+    }
+
+    .robot-links { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+    .robot-btn { background-color: #28a745; color: white; padding: 12px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; }
+    .robot-btn:hover { background-color: #218838; }
+
+    .admin-section {
+      margin-top: 40px;
+      padding: 20px;
+      background-color: #fff3cd;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      display: none;
+    }
+
+    .admin-section.visible { display: block; }
+
+    .btn-admin { background-color: #ffc107; color: #000; }
+    .btn-admin:hover { background-color: #e0a800; }
+
+    .suggestions-box {
+      position: absolute;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: var(--border-radius);
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      box-shadow: var(--shadow);
+      display: none;
+      width: calc(100% - 40px);
+    }
+
+    .suggestion-item {
+      padding: 10px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+    }
+
+    .suggestion-item:hover {
+      background-color: #f0f0f0;
+    }
+
+    .price-info {
+      background-color: #e7f3ff;
+      padding: 15px;
+      border-radius: var(--border-radius);
+      margin: 15px 0;
+      font-size: 14px;
+    }
+
+    #lessonInputWrapper {
+      position: relative;
+    }
+
+    .loading {
+      display: inline-block;
+      margin-left: 10px;
+    }
+
+    .status-message {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: var(--border-radius);
+      text-align: center;
+    }
+
+    .status-success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .status-error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+
+    .status-info {
+      background-color: #d1ecf1;
+      color: #0c5460;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 15px;
+    }
+
+    .button-group button {
+      flex: 1;
+      min-width: 200px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="lockScreen">
+    <div class="lock-card">
+      <h1 style="font-size: 1.5rem; margin-bottom: 10px;">📚 Fiches Pédagogiques</h1>
+
+      <!-- Affichage du solde de crédits -->
+      <div id="creditDisplay" style="background: linear-gradient(135deg, #4a90e2, #357abd); color: white; border-radius: 12px; padding: 15px; margin: 15px 0; text-align: center;">
+        <div style="font-size: 2rem; font-weight: bold;" id="creditCount">0</div>
+        <div style="font-size: 13px; opacity: 0.9;" id="creditLabel">fiches disponibles</div>
+      </div>
+
+      <!-- Message état -->
+      <div id="creditStatusMsg" style="font-size: 14px; margin-bottom: 15px; color: #555;"></div>
+
+      <!-- Section recharge -->
+      <div id="rechargeSection">
+        <div class="price-info" style="text-align: left;">
+          <p><i class="fas fa-gift" style="color:#4a90e2;"></i> <strong>3 premières fiches gratuites</strong></p>
+          <p style="margin-top:6px;"><i class="fas fa-coins" style="color:#f0ad00;"></i> <strong>250 FCFA = 10 fiches</strong></p>
+        </div>
+        <p style="font-size: 13px; margin: 10px 0 5px; color:#555;">Recharger votre compte :</p>
+        <a href="https://pay.wave.com/m/M_sn_m79X6ItWV6z9/c/sn/?amount=250" target="_blank" class="btn-wave" style="font-size: 14px; padding: 12px 20px;">
+          <i class="fas fa-mobile-alt"></i> Payer 250 FCFA via Wave
+        </a>
+        <a href="https://wa.me/221777195288?text=Bonjour,%20je%20viens%20de%20payer%20250%20FCFA%20pour%2010%20fiches.%20Merci%20de%20m'envoyer%20mon%20code." target="_blank" class="btn-whatsapp">
+          <i class="fab fa-whatsapp"></i> Recevoir mon code de recharge
+        </a>
+        <hr style="margin: 15px 0; border-color: #eee;">
+        <p style="font-size: 13px; color:#555; margin-bottom: 8px;">Entrer un code de recharge :</p>
+        <input type="text" id="rechargeCodeInput" placeholder="Code de recharge (ex: FICHE-XXXX)" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; text-align: center; font-family: 'Patrick Hand', cursive; font-size: 15px;">
+        <button onclick="applyRechargeCode()" style="width: 100%; margin-top: 10px;">Valider le code</button>
+      </div>
+
+      <!-- Bouton accéder si crédits disponibles -->
+      <button id="enterBtn" onclick="enterApp()" style="width: 100%; margin-top: 15px; background-color: #28a745; display:none;">
+        <i class="fas fa-door-open"></i> Accéder à l'application
+      </button>
+
+      <!-- Lien admin discret -->
+      <p style="margin-top: 18px; font-size: 11px; color: #aaa; cursor: pointer;" onclick="showAdminCodeEntry()">⚙ Admin</p>
+      <div id="adminCodeEntry" style="display:none; margin-top:8px;">
+        <input type="password" id="adminUnlockInput" placeholder="Code admin" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:5px; text-align:center;">
+        <button onclick="adminUnlock()" style="width:100%; margin-top:6px; font-size:13px;">Accès Admin</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="mainContent">
+    <!-- Barre de solde crédits -->
+    <div id="creditBar" style="background: linear-gradient(135deg, #4a90e2, #357abd); color:white; border-radius:8px; padding:10px 15px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center; font-size:14px;">
+      <span><i class="fas fa-coins" style="color:#ffd700;"></i> <span id="mainCreditCount">0</span> fiche(s) disponible(s)</span>
+      <button onclick="document.getElementById('lockScreen').style.display='flex'; document.getElementById('mainContent').style.display='none'; updateCreditUI();" style="background:rgba(255,255,255,0.25); padding:5px 12px; font-size:12px; border-radius:20px;">
+        <i class="fas fa-plus"></i> Recharger
+      </button>
+    </div>
+    <h2><i class="fas fa-chalkboard-teacher"></i> Fiche de Leçon</h2>
+
+    <div id="statusMessage"></div>
+
+    <!-- GUIDE ÉTAPES -->
+    <div style="background:#fff; border-radius:10px; box-shadow:0 4px 6px rgba(0,0,0,0.1); padding:20px; margin-bottom:20px;">
+      <h3 style="color:#4a90e2; margin-bottom:15px; text-align:center;"><i class="fas fa-question-circle"></i> Comment obtenir ma fiche ?</h3>
+
+      <!-- Étape 1 -->
+      <div style="display:flex; gap:12px; align-items:flex-start; margin-bottom:14px;">
+        <div style="background:#4a90e2; color:white; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-weight:bold; flex-shrink:0;">1</div>
+        <div style="flex:1;">
+          <strong>Écris le titre de ta leçon et la classe</strong><br>
+          <span style="color:#666; font-size:14px;">Exemple : <em>Français CE1 — La phrase</em></span><br>
+          <div id="lessonInputWrapper" style="position:relative;">
+            <textarea id="lesson" placeholder="Ex: Français CE1 — La phrase" oninput="showSuggestions()" style="width:100%; height:70px; margin-top:8px; font-size:15px; padding:10px; border:2px solid #4a90e2; border-radius:8px; font-family:'Patrick Hand',cursive; resize:none;"></textarea>
+            <div id="suggestionsBox" class="suggestions-box"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Étape 2 -->
+      <div style="display:flex; gap:12px; align-items:flex-start; margin-bottom:14px;">
+        <div style="background:#4a90e2; color:white; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-weight:bold; flex-shrink:0;">2</div>
+        <div style="flex:1;">
+          <strong>Clique sur "Générer avec Gemini"</strong><br>
+          <span style="color:#666; font-size:14px;">L'IA crée ta fiche automatiquement — plus besoin de copier-coller !</span><br>
+          <button id="generateBtn" type="button" onclick="generateWithGemini()" style="margin-top:8px; width:100%; padding:14px; font-size:16px; background:linear-gradient(135deg,#4285f4,#0f9d58);">
+            <i class="fas fa-magic"></i> Générer avec Gemini
+          </button>
+        </div>
+      </div>
+
+      <!-- Étape 3 -->
+      <div style="display:flex; gap:12px; align-items:flex-start;">
+        <div style="background:#28a745; color:white; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-weight:bold; flex-shrink:0;">3</div>
+        <div style="flex:1;">
+          <strong>Télécharge ta fiche en PDF !</strong><br>
+          <div style="display:flex; gap:10px; margin-top:8px; flex-wrap:wrap;">
+            <button onclick="downloadPDF()" style="flex:1; padding:12px; font-size:15px;">
+              <i class="fas fa-download"></i> Télécharger PDF
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Boutons secondaires -->
+    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:15px;">
+      <select id="fontSelect" style="padding:8px; border-radius:8px; border:1px solid #ccc; font-family:'Patrick Hand',cursive;">
+        <option value="'Patrick Hand', cursive">Patrick Hand</option>
+        <option value="Arial, sans-serif">Arial</option>
+      </select>
+      <button onclick="toggleAdmin()" style="background:#ffc107; color:#000; padding:8px 16px; font-size:13px;">
+        <i class="fas fa-user-shield"></i> Mode Admin
+      </button>
+      <button type="button" class="btn-whatsapp-order" onclick="orderViaWhatsApp()" style="padding:8px 16px; font-size:13px;">
+        <i class="fab fa-whatsapp"></i> Commander via WhatsApp
+      </button>
+    </div>
+
+    <div id="tableContainer">
+      <table>
+        <tr><th>Classe</th><th>Sous-domaine</th><th>Durée</th></tr>
+        <tr><td id="cell1" contenteditable="true"></td><td id="cell2" contenteditable="true"></td><td id="cell3" contenteditable="true"></td></tr>
+      </table>
+      <table>
+        <tr><th>Informations générales</th></tr>
+        <tr><td id="cell4" contenteditable="true"></td></tr>
+      </table>
+      <table>
+        <tr><th>Étape</th><th>Part du Maître</th><th>Part des Élèves</th></tr>
+        <tr><td id="cell5" contenteditable="true"></td><td id="cell6" contenteditable="true"></td><td id="cell7" contenteditable="true"></td></tr>
+        <tr><td id="cell8" contenteditable="true"></td><td id="cell9" contenteditable="true"></td><td id="cell10" contenteditable="true"></td></tr>
+        <tr><td id="cell11" contenteditable="true"></td><td id="cell12" contenteditable="true"></td><td id="cell13" contenteditable="true"></td></tr>
+        <tr><td id="cell14" contenteditable="true"></td><td id="cell15" contenteditable="true"></td><td id="cell16" contenteditable="true"></td></tr>
+        <tr><td id="cell17" contenteditable="true"></td><td id="cell18" contenteditable="true"></td><td id="cell19" contenteditable="true"></td></tr>
+        <tr><td id="cell20" contenteditable="true"></td><td id="cell21" contenteditable="true"></td><td id="cell22" contenteditable="true"></td></tr>
+        <tr><td id="cell23" contenteditable="true"></td><td id="cell24" contenteditable="true"></td><td id="cell25" contenteditable="true"></td></tr>
+      </table>
+    </div>
+
+    <div id="adminSection" class="admin-section">
+      <h3><i class="fas fa-user-shield"></i> Section Admin</h3>
+      <input type="password" id="adminPass" placeholder="Mot de passe admin" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
+      <button onclick="verifyAdmin()" style="margin-top: 10px;">Vérifier</button>
+      
+      <div id="adminControls" style="display: none; margin-top: 20px;">
+        <input type="text" id="ficheTitle" placeholder="Titre de la fiche (ex: Français CE1 - Les verbes)" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
+        <button class="btn-admin" onclick="saveFicheLocally()"><i class="fas fa-save"></i> Sauvegarder cette fiche</button>
+        <div id="saveStatus"></div>
+        
+        <hr style="margin: 20px 0;">
+        
+        <h4>Fiches sauvegardées (<span id="ficheCount">0</span>)</h4>
+        <button onclick="showAllFiches()" style="margin: 10px 0;"><i class="fas fa-list"></i> Voir toutes les fiches</button>
+        <div id="fichesList" style="max-height: 300px; overflow-y: auto; margin: 10px 0; padding: 10px; background: white; border-radius: 8px; display: none;"></div>
+        
+        <hr style="margin: 20px 0;">
+        <h4>Gestion des fiches</h4>
+        <button onclick="exportFichesAsJSON()" style="margin: 10px 0;"><i class="fas fa-download"></i> Exporter toutes les fiches</button>
+        <br>
+        <input type="file" id="importFile" accept=".json" style="margin: 10px 0;">
+        <button onclick="importFichesFromFile()"><i class="fas fa-upload"></i> Importer des fiches</button>
+      </div>
+    </div>
+
+
+  </div>
+
+
+
+  <script>
+    const ADMIN_PASSWORD = 'admin2025';
+    let fichesDatabase = {};
+    let githubFiches = {}; // Fiches chargées depuis GitHub
+    const GITHUB_JSON_URL = 'https://raw.githubusercontent.com/ndiayejoseph123-code/Le-ons/main/le%C3%A7on.json';
+
+    // Charger les fiches au démarrage
+    loadFichesFromLocalStorage();
+    loadFichesFromGitHub();
+
+    function showStatus(message, type = 'info') {
+      const statusDiv = document.getElementById('statusMessage');
+      statusDiv.className = `status-message status-${type}`;
+      statusDiv.innerHTML = message;
+      statusDiv.style.display = 'block';
+      
+      if (type === 'success' || type === 'error') {
+        setTimeout(() => {
+          statusDiv.style.display = 'none';
+        }, 5000);
+      }
+    }
+
+    // ========== SYSTÈME DE CRÉDITS ==========
+    const FREE_FICHES = 3;
+
+    // URL du fichier JSON de codes sur GitHub (raw)
+    const CODES_GITHUB_URL = 'https://raw.githubusercontent.com/ndiayejoseph123-code/Newdeal/main/les%20codes.json';
+    let githubCodesCache = null; // cache en mémoire pour la session
+
+    async function fetchGitHubCodes() {
+      if (githubCodesCache) return githubCodesCache;
+      try {
+        const res = await fetch(CODES_GITHUB_URL + '?t=' + Date.now()); // anti-cache
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        githubCodesCache = await res.json();
+        return githubCodesCache;
+      } catch(e) {
+        console.warn('Impossible de charger les codes GitHub:', e);
+        return null;
+      }
+    }
+
+    function getCredits() {
+      const freeUsed = parseInt(localStorage.getItem('freeUsed') || '0');
+      const paidCredits = parseInt(localStorage.getItem('paidCredits') || '0');
+      const freeRemaining = Math.max(0, FREE_FICHES - freeUsed);
+      return { freeUsed, paidCredits, freeRemaining, total: freeRemaining + paidCredits };
+    }
+
+    function consumeCredit() {
+      const { freeUsed, paidCredits, freeRemaining } = getCredits();
+      if (freeRemaining > 0) {
+        localStorage.setItem('freeUsed', freeUsed + 1);
+        return true;
+      } else if (paidCredits > 0) {
+        localStorage.setItem('paidCredits', paidCredits - 1);
+        return true;
+      }
+      return false;
+    }
+
+    function updateCreditUI() {
+      const { total, freeRemaining, paidCredits } = getCredits();
+      const countEl = document.getElementById('creditCount');
+      const labelEl = document.getElementById('creditLabel');
+      const msgEl = document.getElementById('creditStatusMsg');
+      const enterBtn = document.getElementById('enterBtn');
+      if (!countEl) return;
+
+      countEl.textContent = total;
+      labelEl.textContent = total > 1 ? 'fiches disponibles' : 'fiche disponible';
+
+      if (total > 0) {
+        let msg = '';
+        if (freeRemaining > 0) msg = '<span style="color:#28a745;">🎁 ' + freeRemaining + ' fiche(s) gratuite(s) restante(s)</span>';
+        if (paidCredits > 0) msg += (msg ? '<br>' : '') + '<span style="color:#4a90e2;">💳 ' + paidCredits + ' fiche(s) payée(s)</span>';
+        msgEl.innerHTML = msg;
+        enterBtn.style.display = 'block';
+      } else {
+        msgEl.innerHTML = '<span style="color:#dc3545;">⚠️ Plus de fiches. Rechargez votre compte ci-dessous.</span>';
+        enterBtn.style.display = 'none';
+      }
+    }
+
+    async function applyRechargeCode() {
+      const code = document.getElementById('rechargeCodeInput').value.trim().toUpperCase();
+      if (!code) { alert('⚠️ Entrez un code de recharge !'); return; }
+
+      // Vérifier si déjà utilisé localement (double protection)
+      const localUsed = JSON.parse(localStorage.getItem('localUsedCodes') || '[]');
+      if (localUsed.includes(code)) {
+        alert('❌ Ce code a déjà été utilisé sur cet appareil.');
+        return;
+      }
+
+      // Afficher chargement
+      const btn = document.querySelector('[onclick="applyRechargeCode()"]');
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ Vérification...'; }
+
+      // Charger les codes depuis GitHub
+      const githubCodes = await fetchGitHubCodes();
+
+      if (btn) { btn.disabled = false; btn.textContent = 'Valider le code'; }
+
+      if (!githubCodes) {
+        alert('❌ Impossible de vérifier le code (connexion requise). Réessayez dans un moment.');
+        return;
+      }
+
+      // Format GitHub simple : { "FICHE-XXXX": 10, ... }
+      // Si le code est présent = valide et disponible
+      // Si absent = invalide ou déjà supprimé par l'admin après utilisation
+      const credits = githubCodes[code];
+
+      if (!credits) {
+        alert('❌ Code invalide ou déjà utilisé.\nContactez l\'administrateur via WhatsApp si vous pensez que c\'est une erreur.');
+        return;
+      }
+
+      // Code valide ! Ajouter les crédits
+      const current = parseInt(localStorage.getItem('paidCredits') || '0');
+      localStorage.setItem('paidCredits', current + credits);
+
+      // Mémoriser localement pour éviter double usage sur le même appareil
+      localUsed.push(code);
+      localStorage.setItem('localUsedCodes', JSON.stringify(localUsed));
+
+      // Vider le cache
+      githubCodesCache = null;
+
+      document.getElementById('rechargeCodeInput').value = '';
+      updateCreditUI();
+      alert('✅ ' + credits + ' fiches ajoutées à votre compte !');
+    }
+
+    function enterApp() {
+      const { total } = getCredits();
+      if (total <= 0) { alert('⚠️ Vous n\'avez plus de fiches disponibles !'); return; }
+      document.getElementById('lockScreen').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'block';
+      showStatus('Bienvenue ! Vous avez <strong>' + total + '</strong> fiche(s) disponible(s).', 'success');
+    }
+
+    function showAdminCodeEntry() {
+      const div = document.getElementById('adminCodeEntry');
+      div.style.display = div.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function adminUnlock() {
+      const pass = document.getElementById('adminUnlockInput').value;
+      if (pass === ADMIN_PASSWORD) {
+        localStorage.setItem('paidCredits', 9999);
+        updateCreditUI();
+        enterApp();
+      } else {
+        alert('❌ Code admin incorrect !');
+      }
+    }
+
+    updateCreditUI();
+
+    function verifyDailyPassword() { enterApp(); }
+
+    function toggleAdmin() {
+      const adminSection = document.getElementById('adminSection');
+      adminSection.classList.toggle('visible');
+    }
+
+    function verifyAdmin() {
+      const pass = document.getElementById('adminPass').value;
+      if (pass === ADMIN_PASSWORD) {
+        document.getElementById('adminControls').style.display = 'block';
+        updateFicheCount();
+        alert('✅ Accès admin accordé !');
+      } else {
+        alert('❌ Mot de passe incorrect !');
+      }
+    }
+
+    function getCurrentFicheData() {
+      const data = {};
+      for (let i = 1; i <= 25; i++) {
+        const cell = document.getElementById(`cell${i}`);
+        if (cell) {
+          data[`cell${i}`] = cell.innerText;
+        }
+      }
+      return data;
+    }
+
+    function loadFicheData(data) {
+      for (let i = 1; i <= 25; i++) {
+        const cell = document.getElementById(`cell${i}`);
+        if (cell && data[`cell${i}`]) {
+          cell.innerText = data[`cell${i}`];
+        }
+      }
+    }
+
+    function loadFichesFromLocalStorage() {
+      try {
+        const saved = localStorage.getItem('fichesDatabase');
+        if (saved) {
+          fichesDatabase = JSON.parse(saved);
+          console.log('Fiches chargées:', Object.keys(fichesDatabase).length);
+          updateFicheCount();
+        }
+      } catch (error) {
+        console.error('Erreur de chargement:', error);
+        fichesDatabase = {};
+      }
+    }
+
+    async function loadFichesFromGitHub() {
+      try {
+        const response = await fetch(GITHUB_JSON_URL);
+        if (!response.ok) throw new Error('Erreur réseau');
+        const data = await response.json();
+        githubFiches = data;
+        console.log('Fiches GitHub chargées:', Object.keys(githubFiches).length);
+      } catch (error) {
+        console.warn('Impossible de charger les fiches GitHub:', error);
+        githubFiches = {};
+      }
+    }
+
+    function updateFicheCount() {
+      const countElement = document.getElementById('ficheCount');
+      if (countElement) {
+        countElement.textContent = Object.keys(fichesDatabase).length;
+      }
+    }
+
+    function showAllFiches() {
+      const fichesList = document.getElementById('fichesList');
+      const fiches = Object.keys(fichesDatabase);
+      
+      if (fiches.length === 0) {
+        fichesList.innerHTML = '<p style="color: #666; text-align: center;">Aucune fiche sauvegardée</p>';
+        fichesList.style.display = 'block';
+        return;
+      }
+      
+      fichesList.innerHTML = fiches.map(key => {
+        const fiche = fichesDatabase[key];
+        return `
+          <div style="padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; background: #f9f9f9;">
+            <strong>${fiche.title}</strong><br>
+            <small style="color: #666;">📅 ${new Date(fiche.lastModified).toLocaleDateString('fr-FR', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}</small><br>
+            <button onclick="loadFiche('${key.replace(/'/g, "\\'")}'); document.getElementById('fichesList').style.display='none';" style="margin-top: 5px; padding: 5px 10px; font-size: 12px;">
+              <i class="fas fa-eye"></i> Charger
+            </button>
+            <button onclick="deleteFiche('${key.replace(/'/g, "\\'")}');" style="margin-top: 5px; padding: 5px 10px; font-size: 12px; background-color: #dc3545;">
+              <i class="fas fa-trash"></i> Supprimer
+            </button>
+          </div>
+        `;
+      }).join('');
+      
+      fichesList.style.display = 'block';
+    }
+
+    function deleteFiche(key) {
+      const fiche = fichesDatabase[key];
+      if (confirm(`Êtes-vous sûr de vouloir supprimer la fiche "${fiche.title}" ?`)) {
+        delete fichesDatabase[key];
+        localStorage.setItem('fichesDatabase', JSON.stringify(fichesDatabase));
+        showStatus(`🗑️ Fiche "${fiche.title}" supprimée`, 'success');
+        updateFicheCount();
+        showAllFiches(); // Rafraîchir la liste
+      }
+    }
+
+    function saveFicheLocally() {
+      const title = document.getElementById('ficheTitle').value.trim();
+      if (!title) {
+        alert('⚠️ Veuillez entrer un titre pour la fiche !');
+        return;
+      }
+
+      const saveStatus = document.getElementById('saveStatus');
+      saveStatus.innerHTML = '<span class="loading">💾 Sauvegarde en cours...</span>';
+
+      const ficheData = getCurrentFicheData();
+      const ficheKey = title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+      
+      fichesDatabase[ficheKey] = {
+        title: title,
+        data: ficheData,
+        lastModified: new Date().toISOString()
+      };
+
+      try {
+        localStorage.setItem('fichesDatabase', JSON.stringify(fichesDatabase));
+        saveStatus.innerHTML = `<div class="status-message status-success">✅ Fiche "${title}" sauvegardée avec succès !<br><small>Vous pouvez maintenant la rechercher en tapant son nom.</small></div>`;
+        document.getElementById('ficheTitle').value = '';
+        showStatus(`✅ Fiche "${title}" sauvegardée ! Total: ${Object.keys(fichesDatabase).length} fiche(s)`, 'success');
+        
+        console.log('Fiche sauvegardée:', {
+          key: ficheKey,
+          title: title,
+          totalFiches: Object.keys(fichesDatabase).length
+        });
+      } catch (error) {
+        console.error('Erreur de sauvegarde:', error);
+        saveStatus.innerHTML = `<div class="status-message status-error">❌ Erreur: ${error.message}</div>`;
+      }
+    }
+
+    function showSuggestions() {
+      const input = document.getElementById('lesson').value.toLowerCase().trim();
+      const suggestionsBox = document.getElementById('suggestionsBox');
+      
+      if (input.length < 1) {
+        suggestionsBox.style.display = 'none';
+        return;
+      }
+
+      // Recherche dans les fiches locales
+      const localMatches = Object.keys(fichesDatabase).filter(key => {
+        const fiche = fichesDatabase[key];
+        return fiche.title.toLowerCase().includes(input);
+      });
+
+      // Recherche dans les fiches GitHub
+      const githubMatches = Object.keys(githubFiches).filter(key => {
+        const fiche = githubFiches[key];
+        const title = fiche.title || key;
+        return title.toLowerCase().includes(input) && !localMatches.includes(key);
+      });
+
+      const allItems = [
+        ...localMatches.map(key => ({
+          key,
+          title: fichesDatabase[key].title,
+          source: 'local',
+          date: fichesDatabase[key].lastModified
+        })),
+        ...githubMatches.map(key => ({
+          key,
+          title: githubFiches[key].title || key,
+          source: 'github'
+        }))
+      ];
+
+      if (allItems.length > 0) {
+        suggestionsBox.innerHTML = allItems.map(item => {
+          const badge = item.source === 'github'
+            ? `<span style="background:#e7f3ff;color:#4a90e2;border-radius:4px;padding:1px 6px;font-size:11px;margin-left:6px;">✅ Disponible</span>`
+            : `<span style="background:#f0fff0;color:#155724;border-radius:4px;padding:1px 6px;font-size:11px;margin-left:6px;">💾 Local</span>`;
+          const dateStr = item.date ? `<br><small style="color:#666;">📅 ${new Date(item.date).toLocaleDateString('fr-FR')}</small>` : '';
+          return `<div class="suggestion-item" onclick="loadFicheFromSuggestion('${item.key.replace(/'/g, "\\'")}', '${item.source}')">
+            <strong>${item.title}</strong>${badge}${dateStr}
+          </div>`;
+        }).join('');
+        suggestionsBox.style.display = 'block';
+      } else {
+        suggestionsBox.style.display = 'none';
+      }
+    }
+
+    function loadFicheFromSuggestion(key, source) {
+      if (source === 'github') {
+        loadFicheFromGitHub(key);
+      } else {
+        loadFiche(key);
+      }
+      document.getElementById('suggestionsBox').style.display = 'none';
+    }
+
+    function loadFicheFromGitHub(key) {
+      const fiche = githubFiches[key];
+      if (!fiche) {
+        showStatus('❌ Fiche GitHub introuvable', 'error');
+        return;
+      }
+      const title = fiche.title || key;
+      document.getElementById('lesson').value = title;
+      
+      // Charger les données dans le tableau (même format que les fiches locales)
+      if (fiche.data) {
+        loadFicheData(fiche.data);
+      } else {
+        // Si la structure est directement les cellules
+        loadFicheData(fiche);
+      }
+      
+      showStatus(`✅ Fiche "${title}" chargée depuis le catalogue !`, 'success');
+      setTimeout(() => {
+        document.getElementById('tableContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    }
+
+    function loadFiche(key) {
+      const fiche = fichesDatabase[key];
+      if (fiche) {
+        // Charger les données dans le tableau
+        loadFicheData(fiche.data);
+        
+        // Mettre le titre dans le champ de recherche
+        document.getElementById('lesson').value = fiche.title;
+        
+        // Cacher les suggestions
+        document.getElementById('suggestionsBox').style.display = 'none';
+        
+        // Message de confirmation
+        showStatus(`✅ Fiche "${fiche.title}" chargée avec succès !`, 'success');
+        
+        // Scroll vers le tableau pour voir la fiche
+        setTimeout(() => {
+          document.getElementById('tableContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300);
+      } else {
+        showStatus(`❌ Fiche introuvable`, 'error');
+      }
+    }
+
+    function orderViaWhatsApp() {
+      const lesson = document.getElementById("lesson").value.trim();
+      
+      if (!lesson) {
+        alert("⚠️ Veuillez indiquer le titre de la leçon et la classe !");
+        return;
+      }
+
+      // Créer le message WhatsApp
+      const message = `Bonjour, je voudrais commander une fiche pédagogique :\n\n${lesson}`;
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/221777195288?text=${encodedMessage}`;
+      
+      // Ouvrir WhatsApp
+      window.open(whatsappUrl, '_blank');
+    }
+
+    function exportFichesAsJSON() {
+      const dataStr = JSON.stringify(fichesDatabase, null, 2);
+      const dataBlob = new Blob([dataStr], {type: 'application/json'});
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `fiches_export_${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      showStatus('✅ Fiches exportées !', 'success');
+    }
+
+    function importFichesFromFile() {
+      const fileInput = document.getElementById('importFile');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        alert('⚠️ Veuillez sélectionner un fichier JSON !');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const importedData = JSON.parse(e.target.result);
+          Object.assign(fichesDatabase, importedData);
+          localStorage.setItem('fichesDatabase', JSON.stringify(fichesDatabase));
+          updateFicheCount();
+          showStatus(`✅ ${Object.keys(importedData).length} fiches importées !`, 'success');
+          fileInput.value = '';
+        } catch (error) {
+          alert('❌ Erreur: Fichier JSON invalide !');
+          console.error(error);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // Fermer les suggestions si on clique ailleurs
+    document.addEventListener('click', function(e) {
+      const suggestionsBox = document.getElementById('suggestionsBox');
+      const lessonInput = document.getElementById('lesson');
+      if (e.target !== lessonInput && !suggestionsBox.contains(e.target)) {
+        suggestionsBox.style.display = 'none';
+      }
+    });
+
+    async function generateWithGemini() {
+      const lesson = document.getElementById("lesson").value.trim();
+      if (!lesson) { alert("⚠️ Indiquez le titre de la leçon et la classe !"); return; }
+
+      const btn = document.getElementById('generateBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Génération en cours...';
+      showStatus('⏳ L\'IA génère votre fiche, veuillez patienter...', 'info');
+
+      try {
+        const response = await fetch('/.netlify/functions/gemini', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lesson })
+        });
+
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err.error || 'Erreur serveur ' + response.status);
+        }
+
+        const data = await response.json();
+        fillTableFromText(data.result);
+
+        if (!consumeCredit()) {
+          alert('⚠️ Vous n\'avez plus de fiches disponibles ! Rechargez votre compte.');
+          document.getElementById('lockScreen').style.display = 'flex';
+          document.getElementById('mainContent').style.display = 'none';
+          updateCreditUI();
+          return;
+        }
+        updateCreditUI();
+        const { total } = getCredits();
+        showStatus('✅ Fiche générée ! Il vous reste <strong>' + total + '</strong> fiche(s).', 'success');
+        setTimeout(() => {
+          document.getElementById('tableContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300);
+
+      } catch (err) {
+        showStatus('❌ Erreur : ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-magic"></i> Générer avec Gemini';
+      }
+    }
+
+    function fillTableFromText(text) {
+      const getTag = (tag) => {
+        const re = new RegExp(`#${tag}:\\s*([\\s\\S]*?)(?=\\n#|$)`, 'i');
+        const m = text.match(re);
+        return m ? m[1].trim() : "";
+      };
+      document.getElementById("cell1").innerText = getTag("CLASSE");
+      document.getElementById("cell2").innerText = getTag("SOUS_DOMAINE");
+      document.getElementById("cell3").innerText = getTag("DUREE");
+      document.getElementById("cell4").innerText = ["DISCIPLINE", "CB", "PALIER", "OA", "OS", "CONTENUS", "MOYENS_MATERIELS", "DOCUMENTATION"].map(t => `${t}: ${getTag(t)}`).join("\n\n");
+
+      const etapeRegex = /#ETAPE(\d+)_(TITRE|MAITRE|ELEVES):([\s\S]*?)(?=\n#ETAPE|$)/g;
+      const etapes = {};
+      let match;
+      while ((match = etapeRegex.exec(text)) !== null) {
+        if (!etapes[match[1]]) etapes[match[1]] = {};
+        etapes[match[1]][match[2]] = match[3].trim();
+      }
+      let idx = 5;
+      Object.keys(etapes).sort((a,b)=>a-b).forEach(num => {
+        if(document.getElementById(`cell${idx}`)) {
+          document.getElementById(`cell${idx}`).innerText = etapes[num].TITRE || "";
+          document.getElementById(`cell${idx+1}`).innerText = etapes[num].MAITRE || "";
+          document.getElementById(`cell${idx+2}`).innerText = etapes[num].ELEVES || "";
+          idx += 3;
+        }
+      });
+    }
+
+    function downloadPDF() {
+      const element = document.getElementById("tableContainer");
+      const opt = {
+        margin:       10,
+        filename:     'fiche.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak:    { mode: 'avoid-all' }
+      };
+      html2pdf().set(opt).from(element).save();
+    }
+  </script>
+</body>
+</html>
