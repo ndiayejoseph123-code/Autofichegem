@@ -1,12 +1,10 @@
 exports.handler = async (event) => {
-  // Autoriser uniquement les requêtes POST
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Méthode non autorisée' }) };
   }
 
-  // Clé API lue depuis les variables d'environnement Netlify (jamais exposée au client)
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-  if (!GEMINI_API_KEY) {
+  const GROQ_API_KEY = process.env.GROQ_API_KEY;
+  if (!GROQ_API_KEY) {
     return { statusCode: 500, body: JSON.stringify({ error: 'Clé API non configurée' }) };
   }
 
@@ -15,10 +13,6 @@ exports.handler = async (event) => {
     ({ lesson } = JSON.parse(event.body));
   } catch {
     return { statusCode: 400, body: JSON.stringify({ error: 'Corps de requête invalide' }) };
-  }
-
-  if (!lesson) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Le titre de la leçon est requis' }) };
   }
 
   const prompt = `en respectant cette balise,
@@ -52,27 +46,29 @@ exports.handler = async (event) => {
 fait moi une fiche pedagogique sur: ${lesson}`;
 
   try {
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
-        })
-      }
-    );
+    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'llama3-70b-8192',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 2048
+      })
+    });
 
-    if (!geminiRes.ok) {
-      const errData = await geminiRes.json().catch(() => ({}));
-      throw new Error(errData?.error?.message || 'Erreur Gemini ' + geminiRes.status);
+    if (!groqRes.ok) {
+      const errData = await groqRes.json().catch(() => ({}));
+      throw new Error(errData?.error?.message || 'Erreur Groq ' + groqRes.status);
     }
 
-    const geminiData = await geminiRes.json();
-    const result = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const groqData = await groqRes.json();
+    const result = groqData?.choices?.[0]?.message?.content;
 
-    if (!result) throw new Error('Réponse vide de Gemini');
+    if (!result) throw new Error('Réponse vide de Groq');
 
     return {
       statusCode: 200,
