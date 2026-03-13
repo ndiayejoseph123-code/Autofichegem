@@ -27,7 +27,7 @@ exports.handler = async (event) => {
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
-        contexte += JSON.stringify(data) + '\n';
+        contexte += JSON.stringify(data).slice(0, 6000) + '\n';
       }
     } catch (e) {
       console.warn('Impossible de charger:', url, e);
