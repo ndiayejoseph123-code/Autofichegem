@@ -48,7 +48,8 @@ exports.handler = async (event) => {
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
-        contexte += JSON.stringify(data).slice(0, 5000) + '\n';
+        const isMethodologie = url.includes('miroir');
+contexte += JSON.stringify(data).slice(0, isMethodologie ? 15000 : 4000) + '\n';
       }
     } catch (e) {
       console.warn('Impossible de charger:', url);
