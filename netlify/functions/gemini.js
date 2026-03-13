@@ -15,19 +15,40 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Corps de requête invalide' }) };
   }
 
-  // Charger les JSON du programme
-  let contexte = '';
-  const urls = [
-    'https://raw.githubusercontent.com/ndiayejoseph123-code/Mirass/main/CEB_etape3_langue.json',
-    'https://raw.githubusercontent.com/ndiayejoseph123-code/Mirass/main/miroir_assane_ndiaye.json'
-  ];
+  const lessonLower = lesson.toLowerCase();
 
+  // Détecter la classe
+  const isCM2 = lessonLower.includes('cm2');
+  const isCM1 = lessonLower.includes('cm1');
+  const isCE2 = lessonLower.includes('ce2');
+  const isCE1 = lessonLower.includes('ce1');
+
+  // Détecter la matière
+  const isEDD = lessonLower.includes('edd') || lessonLower.includes('développement durable') || lessonLower.includes('environnement') || lessonLower.includes('santé');
+  const isDecouverte = lessonLower.includes('histoire') || lessonLower.includes('géographie') || lessonLower.includes('découverte') || lessonLower.includes('ist');
+  const isLangue = lessonLower.includes('français') || lessonLower.includes('lecture') || lessonLower.includes('grammaire') || lessonLower.includes('conjugaison') || lessonLower.includes('orthographe') || lessonLower.includes('vocabulaire') || lessonLower.includes('expression');
+
+  const BASE = 'https://raw.githubusercontent.com/ndiayejoseph123-code/Mirass/main/';
+
+  // Choisir les bons fichiers selon classe + matière
+  let urls = [];
+
+  if (isEDD && isCM2) urls.push(BASE + 'EDD_cm2.json');
+  else if (isEDD && isCE2) urls.push(BASE + 'EDD_ce2.json');
+  else if (isEDD) urls.push(BASE + 'EDD_cm2.json', BASE + 'EDD_ce2.json');
+  else if (isDecouverte && isCM2) urls.push(BASE + 'decouverte_monde_cm2.json');
+  else if (isDecouverte && isCM1) urls.push(BASE + 'decouverte_monde_cm2.json');
+  else if (isLangue || isCM1 || isCM2) urls.push(BASE + 'CEB_etape3_langue.json', BASE + 'miroir_assane_ndiaye.json');
+  else urls.push(BASE + 'CEB_etape3_langue.json', BASE + 'miroir_assane_ndiaye.json');
+
+  // Charger les JSON sélectionnés
+  let contexte = '';
   for (const url of urls) {
     try {
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
-        contexte += JSON.stringify(data) + '\n';
+        contexte += JSON.stringify(data).slice(0, 5000) + '\n';
       }
     } catch (e) {
       console.warn('Impossible de charger:', url);
@@ -35,11 +56,11 @@ exports.handler = async (event) => {
   }
 
   const prompt = `Tu es un assistant pédagogique spécialisé dans l'éducation primaire sénégalaise.
-Voici le contenu complet du programme officiel CEB du Sénégal :
+Voici les extraits du programme officiel CEB du Sénégal correspondant à cette leçon :
 
 ${contexte}
 
-En te basant UNIQUEMENT sur ce programme, génère une fiche pédagogique complète en respectant exactement ces balises :
+En te basant UNIQUEMENT sur ce programme, génère une fiche pédagogique complète et détaillée en respectant exactement ces balises :
 
 #CLASSE: <Classe>
 #DUREE: <Durée>
