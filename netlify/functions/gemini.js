@@ -79,7 +79,7 @@ Fiche pédagogique sur : ${lesson}`;
         'Authorization': `Bearer ${MISTRAL_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'mistral-large-latest',
+        model: 'mistral-small-latest',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
         max_tokens: 2048
