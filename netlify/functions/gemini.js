@@ -3,8 +3,8 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: JSON.stringify({ error: 'Méthode non autorisée' }) };
   }
 
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-  if (!GEMINI_API_KEY) {
+  const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
+  if (!MISTRAL_API_KEY) {
     return { statusCode: 500, body: JSON.stringify({ error: 'Clé API non configurée' }) };
   }
 
@@ -72,26 +72,28 @@ En te basant UNIQUEMENT sur ce programme, génère une fiche pédagogique compl�
 Fiche pédagogique sur : ${lesson}`;
 
   try {
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
-        })
-      }
-    );
+    const mistralRes = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${MISTRAL_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'mistral-large-latest',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 2048
+      })
+    });
 
-    if (!geminiRes.ok) {
-      const errData = await geminiRes.json().catch(() => ({}));
-      throw new Error(errData?.error?.message || 'Erreur Gemini ' + geminiRes.status);
+    if (!mistralRes.ok) {
+      const errData = await mistralRes.json().catch(() => ({}));
+      throw new Error(errData?.error?.message || 'Erreur Mistral ' + mistralRes.status);
     }
 
-    const geminiData = await geminiRes.json();
-    const result = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!result) throw new Error('Réponse vide de Gemini');
+    const mistralData = await mistralRes.json();
+    const result = mistralData?.choices?.[0]?.message?.content;
+    if (!result) throw new Error('Réponse vide de Mistral');
 
     return {
       statusCode: 200,
