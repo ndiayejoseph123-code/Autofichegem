@@ -15,7 +15,23 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Corps de requête invalide' }) };
   }
 
-  const prompt = `en respectant cette balise,
+  // Charger le JSON du programme depuis GitHub
+  let programmeContext = '';
+  try {
+    const jsonRes = await fetch('https://raw.githubusercontent.com/ndiayejoseph123-code/Mirass/main/miroir_assane_ndiaye.json');
+    if (jsonRes.ok) {
+      const jsonData = await jsonRes.json();
+      programmeContext = JSON.stringify(jsonData).slice(0, 8000);
+    }
+  } catch (e) {
+    console.warn('Impossible de charger le JSON:', e);
+  }
+
+  const prompt = `Tu es un assistant pédagogique spécialisé dans l'éducation primaire sénégalaise.
+Voici le contenu du programme officiel à utiliser comme référence :
+${programmeContext}
+
+En te basant sur ce programme, génère une fiche pédagogique complète en respectant exactement ces balises :
 #CLASSE: <Classe>
 #DUREE: <Durée>
 #DISCIPLINE: <Discipline>
@@ -43,7 +59,7 @@ exports.handler = async (event) => {
 #ETAPE5_TITRE: <Titre 5>
 #ETAPE5_MAITRE: <Maître 5>
 #ETAPE5_ELEVES: <Élèves 5>
-fait moi une fiche pedagogique sur: ${lesson}`;
+Fiche pédagogique sur : ${lesson}`;
 
   try {
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
