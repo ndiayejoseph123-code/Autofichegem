@@ -3,8 +3,8 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: JSON.stringify({ error: 'Méthode non autorisée' }) };
   }
 
-  const GROQ_API_KEY = process.env.GROQ_API_KEY;
-  if (!GROQ_API_KEY) {
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+  if (!GEMINI_API_KEY) {
     return { statusCode: 500, body: JSON.stringify({ error: 'Clé API non configurée' }) };
   }
 
@@ -15,11 +15,11 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Corps de requête invalide' }) };
   }
 
-  // Charger les deux JSON du programme depuis GitHub
+  // Charger les JSON du programme
   let contexte = '';
   const urls = [
-    'https://raw.githubusercontent.com/ndiayejoseph123-code/Mirass/main/miroir_assane_ndiaye.json',
-    'https://raw.githubusercontent.com/ndiayejoseph123-code/Mirass/main/CEB_etape3_langue.json'
+    'https://raw.githubusercontent.com/ndiayejoseph123-code/Mirass/main/CEB_etape3_langue.json',
+    'https://raw.githubusercontent.com/ndiayejoseph123-code/Mirass/main/miroir_assane_ndiaye.json'
   ];
 
   for (const url of urls) {
@@ -27,19 +27,19 @@ exports.handler = async (event) => {
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
-        contexte += JSON.stringify(data).slice(0, 6000) + '\n';
+        contexte += JSON.stringify(data) + '\n';
       }
     } catch (e) {
-      console.warn('Impossible de charger:', url, e);
+      console.warn('Impossible de charger:', url);
     }
   }
 
   const prompt = `Tu es un assistant pédagogique spécialisé dans l'éducation primaire sénégalaise.
-Voici le contenu officiel du programme CEB (Curriculum de l'Education de Base) du Sénégal à utiliser comme référence :
+Voici le contenu complet du programme officiel CEB du Sénégal :
 
 ${contexte}
 
-En te basant UNIQUEMENT sur ce programme officiel, génère une fiche pédagogique complète et détaillée en respectant exactement ces balises :
+En te basant UNIQUEMENT sur ce programme, génère une fiche pédagogique complète en respectant exactement ces balises :
 
 #CLASSE: <Classe>
 #DUREE: <Durée>
@@ -72,29 +72,26 @@ En te basant UNIQUEMENT sur ce programme officiel, génère une fiche pédagogiq
 Fiche pédagogique sur : ${lesson}`;
 
   try {
-    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7,
-        max_tokens: 2048
-      })
-    });
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
+        })
+      }
+    );
 
-    if (!groqRes.ok) {
-      const errData = await groqRes.json().catch(() => ({}));
-      throw new Error(errData?.error?.message || 'Erreur Groq ' + groqRes.status);
+    if (!geminiRes.ok) {
+      const errData = await geminiRes.json().catch(() => ({}));
+      throw new Error(errData?.error?.message || 'Erreur Gemini ' + geminiRes.status);
     }
 
-    const groqData = await groqRes.json();
-    const result = groqData?.choices?.[0]?.message?.content;
-
-    if (!result) throw new Error('Réponse vide de Groq');
+    const geminiData = await geminiRes.json();
+    const result = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!result) throw new Error('Réponse vide de Gemini');
 
     return {
       statusCode: 200,
