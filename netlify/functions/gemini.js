@@ -15,23 +15,32 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Corps de requête invalide' }) };
   }
 
-  // Charger le JSON du programme depuis GitHub
-  let programmeContext = '';
-  try {
-    const jsonRes = await fetch('https://raw.githubusercontent.com/ndiayejoseph123-code/Mirass/main/miroir_assane_ndiaye.json');
-    if (jsonRes.ok) {
-      const jsonData = await jsonRes.json();
-      programmeContext = JSON.stringify(jsonData).slice(0, 8000);
+  // Charger les deux JSON du programme depuis GitHub
+  let contexte = '';
+  const urls = [
+    'https://raw.githubusercontent.com/ndiayejoseph123-code/Mirass/main/miroir_assane_ndiaye.json',
+    'https://raw.githubusercontent.com/ndiayejoseph123-code/Mirass/main/CEB_etape3_langue.json'
+  ];
+
+  for (const url of urls) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        contexte += JSON.stringify(data).slice(0, 6000) + '\n';
+      }
+    } catch (e) {
+      console.warn('Impossible de charger:', url, e);
     }
-  } catch (e) {
-    console.warn('Impossible de charger le JSON:', e);
   }
 
   const prompt = `Tu es un assistant pédagogique spécialisé dans l'éducation primaire sénégalaise.
-Voici le contenu du programme officiel à utiliser comme référence :
-${programmeContext}
+Voici le contenu officiel du programme CEB (Curriculum de l'Education de Base) du Sénégal à utiliser comme référence :
 
-En te basant sur ce programme, génère une fiche pédagogique complète en respectant exactement ces balises :
+${contexte}
+
+En te basant UNIQUEMENT sur ce programme officiel, génère une fiche pédagogique complète et détaillée en respectant exactement ces balises :
+
 #CLASSE: <Classe>
 #DUREE: <Durée>
 #DISCIPLINE: <Discipline>
@@ -44,21 +53,22 @@ En te basant sur ce programme, génère une fiche pédagogique complète en resp
 #MOYENS_MATERIELS: <Moyens matériels>
 #MOYENS_PEDAGOGIQUES: <Moyens pédagogiques>
 #DOCUMENTATION: <Documentation>
-#ETAPE1_TITRE: <Titre 1>
-#ETAPE1_MAITRE: <Maître 1>
-#ETAPE1_ELEVES: <Élèves 1>
-#ETAPE2_TITRE: <Titre 2>
-#ETAPE2_MAITRE: <Maître 2>
-#ETAPE2_ELEVES: <Élèves 2>
-#ETAPE3_TITRE: <Titre 3>
-#ETAPE3_MAITRE: <Maître 3>
-#ETAPE3_ELEVES: <Élèves 3>
-#ETAPE4_TITRE: <Titre 4>
-#ETAPE4_MAITRE: <Maître 4>
-#ETAPE4_ELEVES: <Élèves 4>
-#ETAPE5_TITRE: <Titre 5>
-#ETAPE5_MAITRE: <Maître 5>
-#ETAPE5_ELEVES: <Élèves 5>
+#ETAPE1_TITRE: <Titre étape 1>
+#ETAPE1_MAITRE: <Ce que fait le maître>
+#ETAPE1_ELEVES: <Ce que font les élèves>
+#ETAPE2_TITRE: <Titre étape 2>
+#ETAPE2_MAITRE: <Ce que fait le maître>
+#ETAPE2_ELEVES: <Ce que font les élèves>
+#ETAPE3_TITRE: <Titre étape 3>
+#ETAPE3_MAITRE: <Ce que fait le maître>
+#ETAPE3_ELEVES: <Ce que font les élèves>
+#ETAPE4_TITRE: <Titre étape 4>
+#ETAPE4_MAITRE: <Ce que fait le maître>
+#ETAPE4_ELEVES: <Ce que font les élèves>
+#ETAPE5_TITRE: <Titre étape 5>
+#ETAPE5_MAITRE: <Ce que fait le maître>
+#ETAPE5_ELEVES: <Ce que font les élèves>
+
 Fiche pédagogique sur : ${lesson}`;
 
   try {
