@@ -27,7 +27,8 @@ exports.handler = async (event) => {
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
-        contexte += JSON.stringify(data) + '\n';
+        const isMiroir = url.includes('miroir');
+contexte += JSON.stringify(data).slice(0, isMiroir ? 20000 : 4000) + '\n';
       }
     } catch (e) {
       console.warn('Impossible de charger:', url);
@@ -39,7 +40,7 @@ Voici le contenu complet du programme officiel CEB du Sénégal :
 
 ${contexte}
 
-En te basant UNIQUEMENT sur ce programme, génère une fiche pédagogique complète en respectant exactement ces balises :
+En te basant UNIQUEMENT sur ce programme et en respecter les démarches, génère une fiche pédagogique complète qui a des exemples en respectant exactement ces balises :
 
 #CLASSE: <Classe>
 #DUREE: <Durée>
