@@ -40,7 +40,7 @@ Voici le contenu complet du programme officiel CEB du Sénégal :
 
 ${contexte}
 
-En te basant UNIQUEMENT sur ce programme et en respecter les démarches, génère une fiche pédagogique complète qui a des exemples en respectant exactement ces balises :
+En te basant UNIQUEMENT sur ce programme, en oubliant jamais d'écrire ce que l'élève doit être capable faire au terme de la leçon et en respecter les démarches, génère une fiche pédagogique complète qui a des exemples en respectant exactement ces balises :
 
 #CLASSE: <Classe>
 #DUREE: <Durée>
