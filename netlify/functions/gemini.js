@@ -49,9 +49,10 @@ En te basant UNIQUEMENT sur ce programme et en respectant les démarches, génè
 #SOUS_DOMAINE: <Sous-domaine>
 #OA: <OA>
 #OS: <OS>
+#Objectif spécifique : Au terme de la leçon, l'élève devra être capable de <action précise et mesurable>
 #CONTENUS: <Contenus>
 #MOYENS_MATERIELS: <Moyens matériels>
-#MOYENS_PEDAGOGIQUES: <Moyens pédagogiques>
+#MOYENS_PEDAGOGIQUES: <Liste les méthodes : observation, questionnement, démonstration, travail de groupe, exercices dirigés, etc.>
 #DOCUMENTATION: <Documentation>
 #ETAPE1_TITRE: <Titre étape 1>
 #ETAPE1_MAITRE: <Ce que fait le maître>
